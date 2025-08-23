@@ -1,0 +1,9 @@
+# Fichiers d'environnement
+.env
+
+# Fichiers Python
+__pycache__/
+*.pyc
+
+# Fichiers générés
+mcp_server/generated_client/
