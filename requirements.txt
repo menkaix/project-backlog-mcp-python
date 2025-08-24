@@ -5,3 +5,4 @@ python-dotenv
 fastapi
 uvicorn[standard]
 mcp>=1.0.0
+pydantic[dotenv]>=1.10.0

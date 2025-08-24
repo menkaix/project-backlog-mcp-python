@@ -1,79 +1,74 @@
-import os
-from fastapi import FastAPI, Request, HTTPException, Security
-from fastapi.security import APIKeyHeader
+"""Optimized FastAPI application with clean architecture."""
+
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
-from mcp_server import tools
-from mcp_server.mcp_handlers import MCPHandlers
-from mcp import types
+from mcp_server.config.settings import settings
+from mcp_server.core.logging import setup_logging, get_logger
+from mcp_server.core.security import create_auth_dependency
+from mcp_server.core.exceptions import MCPServerError
+from mcp_server.mcp.handlers import mcp_handlers
+import mcp_server.tools  # Import to register tools
 import uvicorn
-import json
 
-# Charger les variables d'environnement
-load_dotenv()
+# Setup logging
+logger = setup_logging()
+app_logger = get_logger(__name__)
 
-# Initialiser l'application FastAPI
+# Initialize FastAPI application
 app = FastAPI(
     title="MCP Server",
-    description="Serveur pour exécuter des outils via une API HTTP sécurisée.",
-    version="1.0.0"
+    description=settings.server_description,
+    version=settings.server_version
 )
 
-# Configuration CORS pour MCP Inspector
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.cors_origins,
+    allow_credentials=settings.cors_credentials,
+    allow_methods=settings.cors_methods,
+    allow_headers=settings.cors_headers,
 )
 
-# Configuration de la sécurité par clé API
-API_KEY = os.getenv("API_KEY")
-API_KEY_NAME = "x-mcp-key"
-api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=True)
+# Authentication dependency
+auth_dependency = create_auth_dependency()
 
-# Initialiser les handlers MCP
-mcp_handlers = MCPHandlers()
 
-async def get_api_key(api_key_header: str = Security(api_key_header)):
-    """Vérifie si la clé API fournie est valide."""
-    if api_key_header == API_KEY:
-        return api_key_header
-    else:
-        raise HTTPException(
-            status_code=403,
-            detail="Could not validate credentials"
-        )
+@app.exception_handler(MCPServerError)
+async def mcp_server_error_handler(request: Request, exc: MCPServerError):
+    """Handle MCP server errors."""
+    app_logger.error(f"MCP Server Error: {exc.message}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "jsonrpc": "2.0",
+            "error": {
+                "code": exc.code,
+                "message": exc.message,
+                "data": exc.data
+            }
+        }
+    )
 
-@app.post("/tool/{tool_name}")
-async def execute_tool(tool_name: str, request: Request, api_key: str = Security(get_api_key)):
-    """
-    Exécute un outil spécifié avec les paramètres fournis dans le corps de la requête.
-    """
-    try:
-        params = await request.json()
-    except Exception:
-        params = {}
 
-    if hasattr(tools, tool_name):
-        tool_func = getattr(tools, tool_name)
-        try:
-            result = tool_func(**params)
-            return {"result": result}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-    else:
-        raise HTTPException(status_code=404, detail=f"Tool '{tool_name}' not found.")
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Handle HTTP exceptions."""
+    app_logger.warning(f"HTTP Exception: {exc.detail}")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail}
+    )
 
-# ===== ENDPOINTS MCP =====
+
+# ===== MCP ENDPOINTS =====
 
 @app.post("/mcp")
-async def mcp_main_endpoint(request: Request, api_key: str = Security(get_api_key)):
+async def mcp_main_endpoint(request: Request, _: str = auth_dependency):
     """
-    Endpoint principal MCP pour le transport HTTP streamable.
-    Compatible avec MCP Inspector et autres clients MCP officiels.
+    Main MCP endpoint for HTTP streamable transport.
+    Compatible with MCP Inspector and other official MCP clients.
     """
     try:
         body = await request.json()
@@ -81,25 +76,23 @@ async def mcp_main_endpoint(request: Request, api_key: str = Security(get_api_ke
         params = body.get("params", {})
         request_id = body.get("id")
         
-        # Gestion des différents messages MCP
+        app_logger.debug(f"MCP request: method={method}, id={request_id}")
+        
         if method == "initialize":
             return {
                 "jsonrpc": "2.0",
                 "id": request_id,
                 "result": {
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {
-                        "tools": {}
-                    },
+                    "protocolVersion": settings.mcp_protocol_version,
+                    "capabilities": {"tools": {}},
                     "serverInfo": {
-                        "name": "project-backlog-mcp-server",
-                        "version": "1.0.0"
+                        "name": settings.server_name,
+                        "version": settings.server_version
                     }
                 }
             }
         
         elif method == "notifications/initialized":
-            # Notification d'initialisation - pas de réponse requise
             return {"jsonrpc": "2.0"}
         
         elif method == "tools/list":
@@ -163,6 +156,7 @@ async def mcp_main_endpoint(request: Request, api_key: str = Security(get_api_ke
             }
             
     except Exception as e:
+        app_logger.error(f"Error in MCP endpoint: {e}")
         return JSONResponse(
             status_code=500,
             content={
@@ -176,103 +170,17 @@ async def mcp_main_endpoint(request: Request, api_key: str = Security(get_api_ke
             }
         )
 
-@app.post("/mcp/list-tools")
-async def mcp_list_tools(api_key: str = Security(get_api_key)):
-    """
-    Endpoint MCP pour lister les outils disponibles.
-    Compatible avec MCP Inspector via transport HTTP streamable.
-    """
-    try:
-        result = mcp_handlers.list_tools()
-        return {
-            "jsonrpc": "2.0",
-            "result": {
-                "tools": [
-                    {
-                        "name": tool.name,
-                        "description": tool.description,
-                        "inputSchema": tool.inputSchema
-                    }
-                    for tool in result.tools
-                ]
-            }
-        }
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={
-                "jsonrpc": "2.0",
-                "error": {
-                    "code": -32603,
-                    "message": "Internal error",
-                    "data": str(e)
-                }
-            }
-        )
-
-@app.post("/mcp/call-tool")
-async def mcp_call_tool(request: Request, api_key: str = Security(get_api_key)):
-    """
-    Endpoint MCP pour exécuter un outil.
-    Compatible avec MCP Inspector via transport HTTP streamable.
-    """
-    try:
-        body = await request.json()
-        tool_name = body.get("params", {}).get("name")
-        arguments = body.get("params", {}).get("arguments", {})
-        
-        if not tool_name:
-            return JSONResponse(
-                status_code=400,
-                content={
-                    "jsonrpc": "2.0",
-                    "error": {
-                        "code": -32602,
-                        "message": "Invalid params",
-                        "data": "Tool name is required"
-                    }
-                }
-            )
-        
-        result = mcp_handlers.call_tool(tool_name, arguments)
-        
-        return {
-            "jsonrpc": "2.0",
-            "result": {
-                "content": [
-                    {
-                        "type": content.type,
-                        "text": content.text
-                    }
-                    for content in result.content
-                ],
-                "isError": getattr(result, 'isError', False)
-            }
-        }
-        
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={
-                "jsonrpc": "2.0",
-                "error": {
-                    "code": -32603,
-                    "message": "Internal error",
-                    "data": str(e)
-                }
-            }
-        )
 
 @app.get("/mcp/info")
 async def mcp_info():
     """
-    Endpoint d'information MCP pour MCP Inspector.
-    Pas d'authentification requise pour les informations de base.
+    MCP information endpoint for MCP Inspector.
+    No authentication required for basic information.
     """
     return {
-        "name": "project-backlog-mcp-server",
-        "version": "1.0.0",
-        "description": "Serveur MCP pour la gestion des projets et diagrammes via HyperManager API",
+        "name": settings.server_name,
+        "version": settings.server_version,
+        "description": settings.server_description,
         "transport": "http",
         "capabilities": {
             "tools": True,
@@ -280,30 +188,82 @@ async def mcp_info():
         }
     }
 
+
+# ===== LEGACY TOOL ENDPOINTS =====
+
+@app.post("/tool/{tool_name}")
+async def execute_tool(tool_name: str, request: Request, _: str = auth_dependency):
+    """
+    Execute a tool by name (legacy endpoint).
+    """
+    try:
+        params = await request.json()
+    except Exception:
+        params = {}
+
+    try:
+        result = mcp_handlers.call_tool(tool_name, params)
+        
+        if getattr(result, 'isError', False):
+            raise HTTPException(status_code=500, detail=result.content[0].text)
+        
+        # Parse JSON result for legacy compatibility
+        import json
+        result_data = json.loads(result.content[0].text)
+        return {"result": result_data}
+        
+    except Exception as e:
+        app_logger.error(f"Error executing tool {tool_name}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== DEBUG ENDPOINTS =====
+
 @app.get("/debug/api-key")
 async def debug_api_key():
-    """Endpoint de debug pour vérifier l'API_KEY chargée."""
+    """Debug endpoint to check API key configuration."""
     return {
-        "api_key_loaded": API_KEY,
-        "api_key_length": len(API_KEY) if API_KEY else 0
+        "api_key_loaded": bool(settings.api_key),
+        "api_key_length": len(settings.api_key) if settings.api_key else 0
     }
+
 
 @app.post("/debug/auth-test")
 async def debug_auth_test(request: Request):
-    """Endpoint de debug pour tester l'authentification."""
+    """Debug endpoint to test authentication."""
     headers = dict(request.headers)
-    api_key_from_header = headers.get("x-mcp-key", "NOT_PROVIDED")
+    api_key_from_header = headers.get(settings.api_key_header_name, "NOT_PROVIDED")
     
     return {
-        "expected_api_key": API_KEY,
+        "expected_api_key": settings.api_key,
         "received_api_key": api_key_from_header,
-        "match": api_key_from_header == API_KEY,
+        "match": api_key_from_header == settings.api_key,
         "all_headers": headers
     }
 
+
+# ===== HEALTH CHECK =====
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint."""
+    return {
+        "status": "healthy",
+        "server": settings.server_name,
+        "version": settings.server_version
+    }
+
+
 def start():
-    """Lance le serveur FastAPI avec uvicorn."""
-    uvicorn.run("mcp_server.main:app", host="0.0.0.0", port=5000, reload=True)
+    """Start the FastAPI server with uvicorn."""
+    app_logger.info(f"Starting {settings.server_name} v{settings.server_version}")
+    uvicorn.run(
+        "mcp_server.main:app",
+        host=settings.host,
+        port=settings.port,
+        reload=settings.reload
+    )
+
 
 if __name__ == "__main__":
     start()

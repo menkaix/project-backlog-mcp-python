@@ -420,3 +420,425 @@ paths:
           description: "Success."
           schema:
             type: string
+
+  "/story-command/{storyID}/features":
+    get:
+      description: "Get features of a story"
+      operationId: "get-story-features"
+      parameters:
+        - name: storyID
+          in: path
+          type: string
+          required: true
+          description: "ID of the story"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+
+  "/feature-command/{featureID}":
+    get:
+      description: "Get a feature by ID"
+      operationId: "get-feature"
+      parameters:
+        - name: featureID
+          in: path
+          type: string
+          required: true
+          description: "ID of the feature"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+    patch:
+      description: "Update a feature"
+      operationId: "update-feature"
+      parameters:
+        - name: featureID
+          in: path
+          type: string
+          required: true
+          description: "ID of the feature"
+        - name: request
+          in: body
+          description: "Feature data to update"
+          schema:
+            type: object
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+    delete:
+      description: "Delete a feature"
+      operationId: "delete-feature"
+      parameters:
+        - name: featureID
+          in: path
+          type: string
+          required: true
+          description: "ID of the feature"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+
+  "/feature-command/{featureID}/children":
+    get:
+      description: "Get children features of a feature"
+      operationId: "get-feature-children"
+      parameters:
+        - name: featureID
+          in: path
+          type: string
+          required: true
+          description: "ID of the feature"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+
+  "/actor-command/{project}":
+    get:
+      description: "Get actors of a project"
+      operationId: "get-project-actors"
+      parameters:
+        - name: project
+          in: path
+          type: string
+          required: true
+          description: "ID of the project"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+
+  "/actor-command/{project}/{actorID}":
+    get:
+      description: "Get an actor by ID"
+      operationId: "get-actor"
+      parameters:
+        - name: project
+          in: path
+          type: string
+          required: true
+          description: "ID of the project"
+        - name: actorID
+          in: path
+          type: string
+          required: true
+          description: "ID of the actor"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+    patch:
+      description: "Update an actor"
+      operationId: "update-actor"
+      parameters:
+        - name: project
+          in: path
+          type: string
+          required: true
+          description: "ID of the project"
+        - name: actorID
+          in: path
+          type: string
+          required: true
+          description: "ID of the actor"
+        - name: request
+          in: body
+          description: "Actor data to update"
+          schema:
+            type: object
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+    delete:
+      description: "Delete an actor"
+      operationId: "delete-actor"
+      parameters:
+        - name: project
+          in: path
+          type: string
+          required: true
+          description: "ID of the project"
+        - name: actorID
+          in: path
+          type: string
+          required: true
+          description: "ID of the actor"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+
+  "/actor-command/{project}/{actorID}/stories":
+    get:
+      description: "Get stories of an actor"
+      operationId: "get-actor-stories"
+      parameters:
+        - name: project
+          in: path
+          type: string
+          required: true
+          description: "ID of the project"
+        - name: actorID
+          in: path
+          type: string
+          required: true
+          description: "ID of the actor"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+
+  "/story-command/{storyID}":
+    get:
+      description: "Get a story by ID"
+      operationId: "get-story"
+      parameters:
+        - name: storyID
+          in: path
+          type: string
+          required: true
+          description: "ID of the story"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+    delete:
+      description: "Delete a story"
+      operationId: "delete-story"
+      parameters:
+        - name: storyID
+          in: path
+          type: string
+          required: true
+          description: "ID of the story"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+
+  "/project-command/{project}":
+    get:
+      description: "Get a project by ID"
+      operationId: "get-project"
+      parameters:
+        - name: project
+          in: path
+          type: string
+          required: true
+          description: "ID of the project"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+    patch:
+      description: "Update a project"
+      operationId: "update-project"
+      parameters:
+        - name: project
+          in: path
+          type: string
+          required: true
+          description: "ID of the project"
+        - name: request
+          in: body
+          description: "Project data to update"
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              code:
+                type: string
+              clientName:
+                type: string
+              description:
+                type: string
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+    delete:
+      description: "Delete a project"
+      operationId: "delete-project"
+      parameters:
+        - name: project
+          in: path
+          type: string
+          required: true
+          description: "ID of the project"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+
+  "/project-command/{project}/actors":
+    get:
+      description: "Get all actors of a project"
+      operationId: "get-all-project-actors"
+      parameters:
+        - name: project
+          in: path
+          type: string
+          required: true
+          description: "ID of the project"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+
+  "/project-command/{project}/stories":
+    get:
+      description: "Get all stories of a project"
+      operationId: "get-project-stories"
+      parameters:
+        - name: project
+          in: path
+          type: string
+          required: true
+          description: "ID of the project"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+
+  "/project-command/{project}/features":
+    get:
+      description: "Get all features of a project"
+      operationId: "get-project-features"
+      parameters:
+        - name: project
+          in: path
+          type: string
+          required: true
+          description: "ID of the project"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+
+  "/diagrams/{id}/export":
+    get:
+      description: "Export a diagram in various formats"
+      operationId: "export-diagram"
+      parameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: "Diagram ID"
+        - name: format
+          in: query
+          type: string
+          required: false
+          description: "Export format (png, svg, pdf)"
+          enum: ["png", "svg", "pdf"]
+          default: "png"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+
+  "/diagrams/{id}/clone":
+    post:
+      description: "Clone a diagram"
+      operationId: "clone-diagram"
+      parameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: "Diagram ID to clone"
+        - name: request
+          in: body
+          description: "Clone parameters"
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "Name for the cloned diagram"
+            required:
+              - name
+      responses:
+        201:
+          description: "Created."
+          schema:
+            type: string
+
+  "/feature-command/{featureID}/move":
+    post:
+      description: "Move a feature to another parent"
+      operationId: "move-feature"
+      parameters:
+        - name: featureID
+          in: path
+          type: string
+          required: true
+          description: "ID of the feature to move"
+        - name: request
+          in: body
+          description: "Move parameters"
+          schema:
+            type: object
+            properties:
+              newParentId:
+                type: string
+                description: "ID of the new parent feature or story"
+            required:
+              - newParentId
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
+
+  "/story-command/{storyID}/move":
+    post:
+      description: "Move a story to another actor"
+      operationId: "move-story"
+      parameters:
+        - name: storyID
+          in: path
+          type: string
+          required: true
+          description: "ID of the story to move"
+        - name: request
+          in: body
+          description: "Move parameters"
+          schema:
+            type: object
+            properties:
+              newActorId:
+                type: string
+                description: "ID of the new actor"
+            required:
+              - newActorId
+      responses:
+        200:
+          description: "Success."
+          schema:
+            type: string
