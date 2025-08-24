@@ -4,9 +4,12 @@ from typing import Any, Dict, Optional
 from mcp_server.services.base import BaseService
 from mcp_server.generated_client.hypermanager_ia_gemini_integration_client.api.default import (
     get_list_projects, add_project, get_projects_tree, get_list_feature_types, refresh_feature_types,
-    normalize_tasks
+    normalize_tasks, get_project, update_project, delete_project, get_all_project_actors,
+    get_project_stories, get_project_features
 )
-from mcp_server.generated_client.hypermanager_ia_gemini_integration_client.models import AddProjectBody
+from mcp_server.generated_client.hypermanager_ia_gemini_integration_client.models import (
+    AddProjectBody, UpdateProjectBody
+)
 
 
 class ProjectService(BaseService):
@@ -124,12 +127,11 @@ class ProjectService(BaseService):
         Returns:
             Project data
         """
-        # This would need to be implemented in the API client
         return self.execute_api_call(
             "get_project",
-            lambda client, **kwargs: f"Project {project_id} - API not yet implemented",
+            get_project.sync,
             client=self.client.client,
-            project_id=project_id
+            project=project_id
         )
     
     def update_project(self, project_id: str, project_data: Dict[str, Any]) -> Any:
@@ -143,13 +145,14 @@ class ProjectService(BaseService):
         Returns:
             Updated project data
         """
-        # This would need to be implemented in the API client
+        body = UpdateProjectBody(**project_data)
+        
         return self.execute_api_call(
             "update_project",
-            lambda client, **kwargs: f"Updated project {project_id} - API not yet implemented",
+            update_project.sync,
             client=self.client.client,
-            project_id=project_id,
-            project_data=project_data
+            project=project_id,
+            body=body
         )
     
     def delete_project(self, project_id: str) -> Any:
@@ -162,12 +165,11 @@ class ProjectService(BaseService):
         Returns:
             Deletion result
         """
-        # This would need to be implemented in the API client
         return self.execute_api_call(
             "delete_project",
-            lambda client, **kwargs: f"Deleted project {project_id} - API not yet implemented",
+            delete_project.sync,
             client=self.client.client,
-            project_id=project_id
+            project=project_id
         )
     
     def get_all_project_actors(self, project_id: str) -> Any:
@@ -180,12 +182,11 @@ class ProjectService(BaseService):
         Returns:
             List of all project actors
         """
-        # This would need to be implemented in the API client
         return self.execute_api_call(
             "get_all_project_actors",
-            lambda client, **kwargs: f"All actors of project {project_id} - API not yet implemented",
+            get_all_project_actors.sync,
             client=self.client.client,
-            project_id=project_id
+            project=project_id
         )
     
     def get_project_stories(self, project_id: str) -> Any:
@@ -198,12 +199,11 @@ class ProjectService(BaseService):
         Returns:
             List of project stories
         """
-        # This would need to be implemented in the API client
         return self.execute_api_call(
             "get_project_stories",
-            lambda client, **kwargs: f"Stories of project {project_id} - API not yet implemented",
+            get_project_stories.sync,
             client=self.client.client,
-            project_id=project_id
+            project=project_id
         )
     
     def get_project_features(self, project_id: str) -> Any:
@@ -216,12 +216,11 @@ class ProjectService(BaseService):
         Returns:
             List of project features
         """
-        # This would need to be implemented in the API client
         return self.execute_api_call(
             "get_project_features",
-            lambda client, **kwargs: f"Features of project {project_id} - API not yet implemented",
+            get_project_features.sync,
             client=self.client.client,
-            project_id=project_id
+            project=project_id
         )
 
 

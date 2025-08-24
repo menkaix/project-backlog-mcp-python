@@ -7,6 +7,7 @@ from .add_feature_to_story_body import AddFeatureToStoryBody
 from .add_project_body import AddProjectBody
 from .add_story_to_actor_body import AddStoryToActorBody
 from .update_diagram_body import UpdateDiagramBody
+from .update_project_body import UpdateProjectBody
 from .update_story_body import UpdateStoryBody
 
 __all__ = (
@@ -17,5 +18,6 @@ __all__ = (
     "AddProjectBody",
     "AddStoryToActorBody",
     "UpdateDiagramBody",
+    "UpdateProjectBody",
     "UpdateStoryBody",
 )
