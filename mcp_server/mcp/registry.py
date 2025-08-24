@@ -142,6 +142,15 @@ class ToolRegistry:
             List of tool names
         """
         return list(self._tools.keys())
+    
+    def clear(self) -> None:
+        """
+        Clear all registered tools.
+        
+        This is useful when reloading tools or switching between different tool sets.
+        """
+        self._tools.clear()
+        logger.info("Tool registry cleared")
 
 
 # Global tool registry instance

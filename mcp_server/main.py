@@ -8,7 +8,7 @@ from mcp_server.core.logging import setup_logging, get_logger
 from mcp_server.core.security import create_auth_dependency
 from mcp_server.core.exceptions import MCPServerError
 from mcp_server.mcp.handlers import mcp_handlers
-import mcp_server.tools  # Import to register tools
+import mcp_server.optimized_tools  # Import to register optimized tools
 import uvicorn
 
 # Setup logging
