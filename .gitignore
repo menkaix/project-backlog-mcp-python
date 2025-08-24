@@ -6,4 +6,4 @@ __pycache__/
 *.pyc
 
 # Fichiers générés
-mcp_server/generated_client/
+# mcp_server/generated_client/
